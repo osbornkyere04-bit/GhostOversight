@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # This version is much more stable for 2026 and avoids the 'user' error
+      # This version is much more stable and avoids the 'user' permission bug
       - name: Build with Buildozer
         uses: Ente-AI/Buildozer-Action@v1.2.1
         with:
