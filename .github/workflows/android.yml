@@ -7,16 +7,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # This version is much more stable and avoids the 'user' permission bug
+      # Using the standard action with a fix for the permission issue
       - name: Build with Buildozer
-        uses: Ente-AI/Buildozer-Action@v1.2.1
+        uses: ArtemSBulgakov/buildozer-action@v1
         with:
-          workdir: .
           buildozer_version: stable
           command: buildozer android debug
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: GhostOversight-APK
-          path: bin/*.apk
+          # This line below is the secret to fixing that 'chown' error
+          repository_root: .
