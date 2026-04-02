@@ -6,13 +6,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
+      # This version is much more stable for 2026 and avoids the 'user' error
       - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
+        uses: Ente-AI/Buildozer-Action@v1.2.1
         with:
+          workdir: .
           buildozer_version: stable
           command: buildozer android debug
-          
+
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
