@@ -1,50 +1,50 @@
 from kivy.app import App
-from kivy.uix.floatlayout import FloatLayout
-from kivy.graphics import Color, Line, InstructionGroup
-from kivy.clock import Clock
-import math
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.textinput import TextInput
+from kivy.uix.label import Label
+import socket
 
-class GhostGalaxyWidget(FloatLayout):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.points_count = 40 # Fewer points for mobile RAM
-        self.rings = 6
-        self.target = [500, 500]
-        self.phase = 0
-        self.canvas_group = InstructionGroup()
-        self.canvas.add(self.canvas_group)
-        
-        # Start the 60FPS loop
-        Clock.schedule_interval(self.update, 1.0 / 60.0)
-
-    def on_touch_move(self, touch):
-        # On mobile, the "Hand" is your finger touch
-        self.target = [touch.x, touch.y]
-
-    def update(self, dt):
-        self.canvas_group.clear()
-        self.phase += 0.05
-        
-        for r in range(self.rings):
-            points = []
-            base_r = 40 + (r * 30)
-            
-            # Executive Cyan Color
-            self.canvas_group.add(Color(0, 0.8, 1, 0.8))
-            
-            for i in range(self.points_count + 1):
-                angle = (i / self.points_count) * (math.pi * 2)
-                wave = math.sin(angle * 4 + self.phase + r) * 15
-                
-                x = self.target[0] + math.cos(angle) * (base_r + wave)
-                y = self.target[1] + math.sin(angle) * (base_r + wave)
-                points.extend([x, y])
-
-            self.canvas_group.add(Line(points=points, width=1.1, close=True))
-
-class GhostApp(App):
+class GhostLink(App):
     def build(self):
-        return GhostGalaxyWidget()
+        self.layout = BoxLayout(orientation='vertical', padding=20, spacing=10)
+
+        # 1. UI Elements
+        self.label = Label(text="GhostLink: Phone to Laptop", font_size='20sp')
+        
+        self.ip_input = TextInput(hint_text="Enter Laptop IP (e.g. 192.168.43.15)", multiline=False)
+        self.msg_input = TextInput(hint_text="Type your message here...", multiline=True)
+        
+        self.send_btn = Button(text="SEND TO LAPTOP", background_color=(0, 0.7, 0.9, 1))
+        self.send_btn.bind(on_press=self.send_message)
+
+        # 2. Add to Layout
+        self.layout.add_widget(self.label)
+        self.layout.add_widget(self.ip_input)
+        self.layout.add_widget(self.msg_input)
+        self.layout.add_widget(self.send_btn)
+
+        return self.layout
+
+    def send_message(self, instance):
+        laptop_ip = self.ip_input.text
+        message = self.msg_input.text
+        port = 5555
+
+        if not laptop_ip:
+            self.label.text = "Error: Enter Laptop IP first!"
+            return
+
+        try:
+            # Create the socket connection
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.settimeout(5) # Don't freeze the app if IP is wrong
+            client.connect((laptop_ip, port))
+            client.send(message.encode())
+            client.close()
+            self.label.text = "✅ Message Sent Successfully!"
+        except Exception as e:
+            self.label.text = f"❌ Error: {str(e)}"
 
 if __name__ == "__main__":
-    GhostApp().run()
+    GhostLink().run()
