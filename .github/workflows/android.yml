@@ -1,89 +1,48 @@
 name: Build Android APK
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 120
 
     steps:
+      # Step 1: Load the code
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      # Step 2: Set up Python 3.10 perfectly
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # Step 3: Set up exact Java 17 environment
       - name: Set up Java 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-          cache: 'pip'
-
+      # Step 4: Install the remaining Linux tools
       - name: Install System Dependencies
         run: |
           sudo apt update
-          sudo apt install -y \
-            git \
-            zip \
-            unzip \
-            python3-pip \
-            autoconf \
-            libtool \
-            pkg-config \
-            zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libtinfo5 \
-            cmake \
-            libffi-dev \
-            libssl-dev \
-            build-essential
+          sudo apt install -y git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
-      - name: Upgrade pip and Install Python Dependencies
+      # Step 5: Install Buildozer
+      - name: Install Buildozer & Cython
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          pip install --upgrade pip
           pip install --upgrade "Cython<3.0" buildozer
 
-      - name: Verify Java Installation
-        run: |
-          java -version
-          javac -version
-
-      - name: Build APK with Buildozer
-        env:
-          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      # Step 6: Start the factory (auto-answers yes to prompts)
+      - name: Build the APK
         run: |
           yes | buildozer -v android debug
 
-      - name: Check APK Output
-        run: |
-          ls -lh bin/ || echo "bin directory not found"
-          find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
-
-      - name: Upload APK Artifact
+      # Step 7: Export the APK
+      - name: Upload the final APK
         uses: actions/upload-artifact@v4
-        if: success()
         with:
           name: GhostOversight-APK
           path: bin/*.apk
-          retention-days: 30
-
-      - name: Upload Build Logs on Failure
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: Build-Logs
-          path: |
-            .buildozer/android/platform/build-*/build.log
-            .buildozer/android/platform/build-*/build-*/build.log
-          retention-days: 7
